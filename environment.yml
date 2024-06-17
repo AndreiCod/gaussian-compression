@@ -15,6 +15,10 @@ dependencies:
   - plyfile=1.0.3
   - tqdm=4.66.4
   - ipykernel=6.29.3
+  - omegaconf=2.3.0
+  - matplotlib=3.8.4
+  - seaborn=0.13.2
+  - scikit-learn=1.5.0
   - pip:
     - submodules/diff-gaussian-rasterization
     - submodules/simple-knn
