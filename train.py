@@ -206,7 +206,7 @@ def train_iteration(
         "training_time": training_time,
         "best_loss": min(loss_history),
     }
-    with open(f"{directory}/results.json", "w") as f:
+    with open(f"{directory}/results_compression.json", "w") as f:
         json.dump(results, f, indent=4)
     plot_loss(loss_history, os.path.join(directory, "loss.png"))
     np.save(os.path.join(directory, "loss_history.npy"), np.array(loss_history))

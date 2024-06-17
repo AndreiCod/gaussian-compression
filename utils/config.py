@@ -11,3 +11,9 @@ def load_config(config_path: str) -> OmegaConf:
     )
 
     return conf, conf_3dgs
+
+
+def load_compression_config(config_path: str) -> OmegaConf:
+    conf = OmegaConf.structured(CompressionParams())
+    conf = OmegaConf.merge(conf, OmegaConf.load(config_path))
+    return conf
