@@ -155,6 +155,7 @@ def train_iteration(
         dict(conf.encoding_params.encoding_config),
         encoding_dtype,
         max_encoding_size_mb,
+        22,
     )
 
     # Create encoding model

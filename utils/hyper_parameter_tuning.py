@@ -10,7 +10,6 @@ def calculate_encoding_size_mb(
         encoding_config=encoding_config,
         dtype=encoding_dtype,
     )
-
     return encoding.params.element_size() * encoding.params.nelement() / 1024**2
 
 
@@ -18,7 +17,7 @@ def tune_encoding_config(
     encoding_config: dict,
     dtype: torch.dtype,
     max_size_mb: float,
-    max_log2_hashmap_size: int = 20,
+    max_log2_hashmap_size: int,
 ) -> dict:
 
     encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
@@ -35,13 +34,6 @@ def tune_encoding_config(
         encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
     if encoding_size_mb > max_size_mb:
         encoding_config["log2_hashmap_size"] -= 1
-        encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
-
-    while encoding_size_mb < max_size_mb:
-        encoding_config["n_levels"] += 1
-        encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
-    if encoding_size_mb > max_size_mb:
-        encoding_config["n_levels"] -= 1
         encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
 
     return encoding_config
