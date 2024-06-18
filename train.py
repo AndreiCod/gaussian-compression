@@ -137,8 +137,18 @@ def train_iteration(
     encoding_dtype = (
         torch.float32 if conf.encoding_params.use_float32 else torch.float16
     )
+    # Net size is ignored in the calculation because it is negligible
+    aprox_net_size_mb = (
+        conf.model_params.hidden_size**2
+        * (conf.model_params.num_hidden_layers - 1)
+        * 2
+        * 4
+        / 1024**2
+    )
     max_encoding_size_mb = (
-        size_3dgs_pc_mb + X_size_mb * conf.model_params.compression_ratio
+        size_3dgs_pc_mb
+        + X_size_mb * (1.0 - conf.model_params.compression_ratio)
+        - conf.model_params.compression_ratio * aprox_net_size_mb
     ) / conf.model_params.compression_ratio
 
     conf.encoding_params.encoding_config = tune_encoding_config(
@@ -201,7 +211,7 @@ def train_iteration(
     directory = output_path
     os.makedirs(directory, exist_ok=True)
     results: dict = {
-        "compression_rate": compression_ratio,
+        "compression_ratio": compression_ratio,
         "model_size_mb": model_size_mb,
         "training_time": training_time,
         "best_loss": min(loss_history),
