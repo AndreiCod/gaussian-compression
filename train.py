@@ -20,7 +20,11 @@ from utils import try_gpu, set_seed
 from utils.point_cloud import load_ply, save_ply
 from utils.config import load_config
 from utils.plots import plot_loss
-from utils.hyper_parameter_tuning import tune_encoding_config
+from utils.hyper_parameter_tuning import (
+    tune_encoding_config,
+    calculate_encoding_size_mb,
+    calculate_encoding_utilization,
+)
 from models import CompressionNet
 
 
@@ -195,6 +199,9 @@ def train_iteration(
     )
     model_size_mb = encoding_size_mb + net_size_mb
     compression_ratio = size_3dgs_pc_mb / (model_size_mb + X_size_mb)
+    encoding_utilization = calculate_encoding_utilization(
+        X, dict(conf.encoding_params.encoding_config), encoding_dtype
+    )
 
     # Train model
     loss_history, training_time = train(
@@ -216,6 +223,7 @@ def train_iteration(
         "model_size_mb": model_size_mb,
         "training_time": training_time,
         "best_loss": min(loss_history),
+        "encoding_utilization": encoding_utilization,
     }
     with open(f"{directory}/results_compression.json", "w") as f:
         json.dump(results, f, indent=4)

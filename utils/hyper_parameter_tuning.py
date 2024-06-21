@@ -37,3 +37,31 @@ def tune_encoding_config(
         encoding_size_mb = calculate_encoding_size_mb(encoding_config, dtype)
 
     return encoding_config
+
+
+def calculate_encoding_utilization(
+    X: torch.tensor, encoding_config: dict, encoding_dtype: torch.dtype
+) -> float:
+    encoding = tcnn.Encoding(
+        n_input_dims=3,
+        encoding_config=encoding_config,
+        dtype=encoding_dtype,
+    )
+    encoding.params.data = torch.zeros_like(encoding.params.data)
+    encoding.train()
+
+    y_encoded = encoding(X)
+    grad = torch.autograd.grad(
+        y_encoded,
+        encoding.params,
+        torch.ones_like(y_encoded),
+    )
+
+    grad_values = grad[0]
+    modified_entries = torch.nonzero(grad_values)
+
+    hash_encoding_utility = (
+        modified_entries.nelement() / encoding.params.nelement() * 100
+    )
+
+    return hash_encoding_utility
