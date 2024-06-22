@@ -152,6 +152,7 @@ def train_iteration(
         - conf.model_params.compression_ratio * aprox_net_size_mb
     ) / conf.model_params.compression_ratio
 
+    print("Tuning encoding parameters...")
     conf.encoding_params.encoding_config = tune_encoding_config(
         dict(conf.encoding_params.encoding_config),
         encoding_dtype,
@@ -160,10 +161,13 @@ def train_iteration(
     )
 
     # Tune scaling for encoding based on encoding entropy
+    print("Tuning scaling for encoding...")
     tuned_scale, encoding_entropy_score = tune_scaling_for_encoding(
         X, y, conf, [1.0, 1.5, 2.0, 2.5]
     )
     conf.data_params.X_scaling = [-tuned_scale, tuned_scale]
+
+    print(f"Best scale: {tuned_scale}")
 
     # Clear cache
     gc.collect()
