@@ -22,8 +22,8 @@ from utils.config import load_config
 from utils.plots import plot_loss
 from utils.hyper_parameter_tuning import (
     tune_encoding_config,
-    calculate_encoding_size_mb,
-    calculate_encoding_utilization,
+    get_encoding_size_mb,
+    get_encoding_utilization,
 )
 from models import CompressionNet
 
@@ -199,7 +199,7 @@ def train_iteration(
     )
     model_size_mb = encoding_size_mb + net_size_mb
     compression_ratio = size_3dgs_pc_mb / (model_size_mb + X_size_mb)
-    encoding_utilization = calculate_encoding_utilization(
+    encoding_utilization = get_encoding_utilization(
         X, dict(conf.encoding_params.encoding_config), encoding_dtype
     )
 
