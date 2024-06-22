@@ -24,6 +24,7 @@ from utils.hyper_parameter_tuning import (
     tune_encoding_config,
     get_encoding_size_mb,
     get_encoding_utilization,
+    tune_scaling_for_encoding,
 )
 from models import CompressionNet
 
@@ -118,10 +119,6 @@ def train_iteration(
     size_3dgs_pc_mb = X_size_mb + y_size_mb
 
     # Normalize data
-    X_scaler = MinMaxScaler(feature_range=tuple(conf.data_params.X_scaling))
-    X = X_scaler.fit_transform(X)
-    X = torch.tensor(X, dtype=torch.float32).contiguous()
-
     y_scaler = MinMaxScaler(feature_range=tuple(conf.data_params.y_scaling))
     y = y_scaler.fit_transform(y)
     y = torch.tensor(y, dtype=torch.float32).contiguous()
@@ -161,6 +158,20 @@ def train_iteration(
         max_encoding_size_mb,
         22,
     )
+
+    # Tune scaling for encoding based on encoding entropy
+    tuned_scale, encoding_entropy_score = tune_scaling_for_encoding(
+        X, y, conf, [1.0, 1.5, 2.0, 2.5]
+    )
+    conf.data_params.X_scaling = [-tuned_scale, tuned_scale]
+
+    # Clear cache
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    X_scaler = MinMaxScaler(feature_range=tuple(conf.data_params.X_scaling))
+    X = X_scaler.fit_transform(X)
+    X = torch.tensor(X, dtype=torch.float32).contiguous()
 
     # Create encoding model
     encoding = tcnn.Encoding(
@@ -224,6 +235,7 @@ def train_iteration(
         "training_time": training_time,
         "best_loss": min(loss_history),
         "encoding_utilization": encoding_utilization,
+        "encoding_entropy_score": encoding_entropy_score,
     }
     with open(f"{directory}/results_compression.json", "w") as f:
         json.dump(results, f, indent=4)
