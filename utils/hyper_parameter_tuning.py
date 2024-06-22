@@ -172,7 +172,7 @@ def estimate_encoding_entropy(
     params_entropy = weighted_entropy / param_weights
     params_entropy[torch.isnan(params_entropy)] = 0
 
-    encoding_entropy = params_entropy.sum()
+    encoding_entropy = params_entropy.sum().item()
 
     return encoding_entropy
 
@@ -200,7 +200,6 @@ def tune_scaling_for_encoding(
             X_scaled, y, encoding_config, encoding_dtype
         )
         encoding_score = encoding_entropy * encoding_utilization
-        print(f"Scale: {scale}, Score: {encoding_score}")
 
         if encoding_score < best_score:
             best_score = encoding_score
