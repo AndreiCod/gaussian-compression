@@ -1,14 +1,3 @@
-#
-# Copyright (C) 2023, Inria
-# GRAPHDECO research group, https://team.inria.fr/graphdeco
-# All rights reserved.
-#
-# This software is free for non-commercial, research and evaluation use
-# under the terms of the LICENSE.md file.
-#
-# For inquiries contact  george.drettakis@inria.fr
-#
-
 from math import e
 from pathlib import Path
 import os
@@ -22,6 +11,8 @@ import json
 from tqdm import tqdm
 from gs.utils.image_utils import psnr
 from argparse import ArgumentParser
+
+from utils import try_gpu
 
 
 def readImages(renders_dir, gt_dir):
@@ -38,28 +29,16 @@ def readImages(renders_dir, gt_dir):
 
 
 def evaluate(model_paths):
-
     full_dict = {}
     per_view_dict = {}
-    full_dict_polytopeonly = {}
-    per_view_dict_polytopeonly = {}
-    print("")
 
     for scene_dir in model_paths:
         try:
             print("Scene:", scene_dir)
             full_dict[scene_dir] = {}
             per_view_dict[scene_dir] = {}
-            full_dict_polytopeonly[scene_dir] = {}
-            per_view_dict_polytopeonly[scene_dir] = {}
 
             test_dir = Path(scene_dir) / "test"
-
-            full_dict[scene_dir] = {}
-            per_view_dict[scene_dir] = {}
-            full_dict_polytopeonly[scene_dir] = {}
-            per_view_dict_polytopeonly[scene_dir] = {}
-
             method_dir = test_dir
             gt_dir = method_dir / "gt"
             renders_dir = method_dir / "renders"
@@ -107,17 +86,16 @@ def evaluate(model_paths):
                 json.dump(full_dict[scene_dir], fp, indent=True)
             with open(scene_dir + "/per_view.json", "w") as fp:
                 json.dump(per_view_dict[scene_dir], fp, indent=True)
-        except exception as e:
+        except Exception as e:
             print("Unable to compute metrics for model", scene_dir)
             print(e)
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda:0")
+    device = try_gpu()
     torch.cuda.set_device(device)
 
-    # Set up command line argument parser
-    parser = ArgumentParser(description="Training script parameters")
+    parser = ArgumentParser()
     parser.add_argument(
         "--model_paths", "-m", required=True, nargs="+", type=str, default=[]
     )
