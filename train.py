@@ -123,17 +123,6 @@ def train_iteration(
     y = y_scaler.fit_transform(y)
     y = torch.tensor(y, dtype=torch.float32).contiguous()
 
-    # Create dataloader
-    dataset = torch.utils.data.TensorDataset(X, y)
-    data_loader = DataLoader(
-        dataset,
-        batch_size=conf.model_params.batch_size,
-        shuffle=True,
-        pin_memory=True,
-        num_workers=4,
-        persistent_workers=True,
-    )
-
     # Tune encoding parameters
     encoding_dtype = (
         torch.float32 if conf.encoding_params.use_float32 else torch.float16
@@ -167,15 +156,26 @@ def train_iteration(
     )
     conf.data_params.X_scaling = [-tuned_scale, tuned_scale]
 
+    X_scaler = MinMaxScaler(feature_range=tuple(conf.data_params.X_scaling))
+    X = X_scaler.fit_transform(X)
+    X = torch.tensor(X, dtype=torch.float32).contiguous()
+
     print(f"Best scale: {tuned_scale}")
 
     # Clear cache
     gc.collect()
     torch.cuda.empty_cache()
 
-    X_scaler = MinMaxScaler(feature_range=tuple(conf.data_params.X_scaling))
-    X = X_scaler.fit_transform(X)
-    X = torch.tensor(X, dtype=torch.float32).contiguous()
+    # Create dataloader
+    dataset = torch.utils.data.TensorDataset(X, y)
+    data_loader = DataLoader(
+        dataset,
+        batch_size=conf.model_params.batch_size,
+        shuffle=True,
+        pin_memory=True,
+        num_workers=4,
+        persistent_workers=True,
+    )
 
     # Create encoding model
     encoding = tcnn.Encoding(
